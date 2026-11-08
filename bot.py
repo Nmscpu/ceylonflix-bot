@@ -16,14 +16,13 @@ app = Client(
     bot_token=BOT_TOKEN
 )
 
-# 1. ඩවුන්ලෝඩ් හෝ ස්ට්‍රීම් ලින්ක් එක ක්‍රියාත්මක කරන Handler එක
+# ඩවුන්ලෝඩ් හෝ ස්ට්‍රීම් ලින්ක් එක ක්‍රියාත්මක කරන Handler එක
 async def download_handler(request):
     file_id = request.match_info.get("file_id")
     try:
-        # Pyrogram හරහා Telegram සර්වර් එකෙන් ෆයිල් එකේ සැබෑ ලින්ක් එක ලබා ගැනීම
-        file_info = await app.get_file(file_id)
-        file_path = file_info.file_path
-        telegram_file_url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file_path}"
+        # Pyrogram client එක හරහා Telegram සර්වර් එකෙන් file path එක ලබා ගැනීම
+        file_info = await app.get_media_file_path(file_id)
+        telegram_file_url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file_info}"
         
         # පරිශීලකයාට කෙලින්ම Telegram සර්වර් එකෙන් ෆයිල් එක ලබා දීමට Redirect කිරීම
         raise web.HTTPFound(telegram_file_url)
@@ -38,7 +37,7 @@ async def handle(request):
 async def web_server():
     server = web.Application()
     server.router.add_get("/", handle)
-    server.router.add_get("/download/{file_id}", download_handler)  # 404 විසඳීමට එකතු කළ රූට් එක
+    server.router.add_get("/download/{file_id}", download_handler)
     runner = web.AppRunner(server)
     await runner.setup()
     port = int(os.environ.get("PORT", 8080))
