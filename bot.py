@@ -20,18 +20,14 @@ app = Client(
 async def download_handler(request):
     file_id = request.match_info.get("file_id")
     try:
-        # Telegram Bot API හරහා කෙලින්ම file path එක ලබා ගැනීමට client request එකක් යැවීම
-        async with aiohttp.ClientSession() as session:
-            api_url = f"https://api.telegram.org/bot{BOT_TOKEN}/getFile?file_id={file_id}"
-            async with session.get(api_url) as resp:
-                res_json = await resp.json()
-                if res_json.get("ok"):
-                    file_path = res_json["result"]["file_path"]
-                    telegram_file_url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file_path}"
-                    # පරිශීලකයාට කෙලින්ම ෆයිල් එක වෙත redirect කිරීම
-                    raise web.HTTPFound(telegram_file_url)
-                else:
-                    return web.Response(text="Error: Could not retrieve file from Telegram.", status=400)
+        # Pyrogram client එක රන් වන ප්‍රධාන ලූප් එක තුළ get_file ක්‍රියාත්මක කිරීම
+        # මෙහිදී client එක start වී ඇති බව සහතික කර ඇත
+        file_info = await app.get_file(file_id)
+        file_path = file_info.file_path
+        telegram_file_url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file_path}"
+        
+        # පරිශීලකයාට කෙලින්ම Telegram සර්වර් එකෙන් ෆයිල් එක ලබා දීමට Redirect කිරීම
+        raise web.HTTPFound(telegram_file_url)
     except web.HTTPFound as ex:
         raise ex
     except Exception as e:
@@ -83,7 +79,6 @@ async def file_handler(client, message):
 
 # බොට් සහ වෙබ් සර්වර් එක එකට රන් කිරීම සඳහා
 if __name__ == "__main__":
-    import aiohttp
     loop = asyncio.get_event_loop()
     loop.create_task(web_server())
     app.run()
