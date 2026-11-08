@@ -8,7 +8,7 @@ logging.basicConfig(level=logging.INFO)
 
 # ඔබගේ ලබා දී ඇති නිවැරදි දත්ත
 API_ID = int(os.environ.get("API_ID", "34466015"))
-API_HASH = os.environ.get("API_HASH", "secret4118dca3ee2cbad40478f9cefe2375bf")
+API_HASH = os.environ.get("API_HASH", "4118dca3ee2cbad40478f9cefe2375bf")
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "9141486229:AAHGBUVpPI_r60TF3NGUcAI2YGS5DgQTV34")
 PORT = int(os.environ.get("PORT", 8080))
 
