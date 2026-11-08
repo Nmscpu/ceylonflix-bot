@@ -20,9 +20,10 @@ app = Client(
 async def download_handler(request):
     file_id = request.match_info.get("file_id")
     try:
-        # Pyrogram client එක හරහා Telegram සර්වර් එකෙන් file path එක ලබා ගැනීම
-        file_info = await app.get_media_file_path(file_id)
-        telegram_file_url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file_info}"
+        # Pyrogram හරහා Telegram සර්වර් එකෙන් file object එක ලබා ගැනීම
+        file_info = await app.get_file(file_id)
+        file_path = file_info.file_path
+        telegram_file_url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file_path}"
         
         # පරිශීලකයාට කෙලින්ම Telegram සර්වර් එකෙන් ෆයිල් එක ලබා දීමට Redirect කිරීම
         raise web.HTTPFound(telegram_file_url)
