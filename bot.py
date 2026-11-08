@@ -16,13 +16,29 @@ app = Client(
     bot_token=BOT_TOKEN
 )
 
-# සජීවීව පවත්වා ගැනීමට සරල aiohttp වෙබ් සර්වර් එකක් (Render වලට අත්‍යවශ්‍යයි)
+# 1. ඩවුන්ලෝඩ් හෝ ස්ට්‍රීම් ලින්ක් එක ක්‍රියාත්මක කරන Handler එක
+async def download_handler(request):
+    file_id = request.match_info.get("file_id")
+    try:
+        # Pyrogram හරහා Telegram සර්වර් එකෙන් ෆයිල් එකේ සැබෑ ලින්ක් එක ලබා ගැනීම
+        file_info = await app.get_file(file_id)
+        file_path = file_info.file_path
+        telegram_file_url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file_path}"
+        
+        # පරිශීලකයාට කෙලින්ම Telegram සර්වර් එකෙන් ෆයිල් එක ලබා දීමට Redirect කිරීම
+        raise web.HTTPFound(telegram_file_url)
+    except Exception as e:
+        return web.Response(text=f"Error fetching file: {str(e)}", status=500)
+
+# ප්‍රධාන රූට් එක
 async def handle(request):
     return web.Response(text="CeylonFlix Telegram Bot is Alive and Running!")
 
+# වෙබ් සර්වර් එක සැකසීම
 async def web_server():
     server = web.Application()
     server.router.add_get("/", handle)
+    server.router.add_get("/download/{file_id}", download_handler)  # 404 විසඳීමට එකතු කළ රූට් එක
     runner = web.AppRunner(server)
     await runner.setup()
     port = int(os.environ.get("PORT", 8080))
@@ -38,7 +54,7 @@ async def start_handler(client, message):
         "මම ඔබට ක්ෂණිකව Direct Download Link එක ලබා දෙන්නම්! 🎬"
     )
 
-# මූවි ෆයිල් එකක් (Document හෝ Video) ලැබුණු විට ලින්ක් එක ලබා දීම
+# මූවි ෆයිල් එකක් ලැබුණු විට ලින්ක් එක ලබා දීම
 @app.on_message(filters.video | filters.document)
 async def file_handler(client, message):
     media = message.video or message.document
@@ -46,10 +62,7 @@ async def file_handler(client, message):
     file_name = media.file_name if hasattr(media, "file_name") else "video_file.mp4"
     file_size = round(media.file_size / (1024 * 1024), 2) if hasattr(media, "file_size") else 0
     
-    # Render එකේ සර්විස් එකේ Public URL එක ලබා ගැනීම (නැතහොත් Render host URL එක)
     render_external_url = os.getenv("RENDER_EXTERNAL_URL", "http://localhost:8080")
-    
-    # Telegram File ID එක හරහා Direct Stream/Download ලින්ක් එක සැකසීම
     direct_link = f"{render_external_url}/download/{file_id}"
     
     reply_text = (
